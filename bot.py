@@ -1,5 +1,3 @@
-
-from multiprocessing import context
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder,
@@ -14,7 +12,27 @@ from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 import os
 
 TOKEN = os.getenv("BOT_TOKEN") 
-CORRECT_ANSWER = "Վազգեն"
+CORRECT_ANSWERS = {"Davit Samvelyan", 
+                   "Давит Самвелян", 
+                   "Դավիթ Սամվելյան", 
+                   "davit samvelyan", 
+                   "давит самвелян", 
+                   "դավիթ սամվելյան"}
+
+HINTS = {
+    "hint_1": "🧩 Հուշում 1\nՎկան նշել է, որ կասկածյալը դեպքի վայրում էր երեկոյան։",
+    "hint_2": "🧩 Հուշում 2\nԴուռը փակված չէր, ինչը նշանակում է՝ հանցագործը ծանոթ էր տանը։",
+    "hint_3": "🧩 Հուշում 3\nՀարևանը լսել է վիճաբանություն ժամը 22:30-ին։",
+    "hint_4": "🧩 Հուշում 4\nՀանցագործության գործիքը խոհանոցից էր։",
+    "hint_5": "🧩 Հուշում 5\nԶոհը զանգել էր մեկին մահվանից առաջ։",
+    "hint_6": "🧩 Հուշում 6\nՀեռախոսը գտնվել է անջատված վիճակում։",
+    "hint_7": "🧩 Հուշում 7\nՏեսախցիկները անջատվել էին 15 րոպեով։",
+    "hint_8": "🧩 Հուշում 8\nԿասկածյալը չի կարող բացատրել իր գտնվելու վայրը։",
+    "hint_9": "🧩 Հուշում 9\nՄեքենան տեսել են շենքի մոտ։",
+    "hint_10": "🧩 Հուշում 10\nԱրյան հետքերը մաքրված էին մասամբ։",
+    "hint_11": "🧩 Հուշում 11\nԱլիբին հակասում է վկաների ցուցմունքներին։",
+}
+
 
 def main_menu():
     keyboard = [
@@ -67,23 +85,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-
-
-# async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     keyboard = [
-#         [
-#             InlineKeyboardButton("📖 Գործի մանրամասները", callback_data="story"),
-#             InlineKeyboardButton("💡 Հուշումներ", callback_data="hints")
-#         ],
-#         [
-#             InlineKeyboardButton("✍️ Պատասխան", callback_data="answer")
-#         ]
-#     ]
-#     await update.message.reply_text(
-#         "Welcome! Choose an option:",
-#         reply_markup=InlineKeyboardMarkup(keyboard)
-#     )
-
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
     await update.message.reply_text(
@@ -104,19 +105,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Հանցագործությունը պետք է բացահայտվի։\n\n"
             "Ընտրեք գործողությունը 👇",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🕵️‍♂️ Հարցաքննություններ", callback_data="interrogations")],
                 [InlineKeyboardButton("💡 Հուշումներ", callback_data="hints")],
                 [InlineKeyboardButton("✅ Ավարտել քննությունը", callback_data="complete")]
             ])
-        )
-
-    elif query.data == "interrogations":
-        await query.message.reply_text(
-        "🕵️‍♂️ Հարցաքննություններ\n\n"
-        "Ո՞վ է վերջինը տեսել զոհին։\n"
-        "Ո՞վ ունի շարժառիթ։\n\n"
-        "(Այս հատվածը կարող եք ընդլայնել)"
-    )       
+        )      
 
     elif query.data == "complete":
          context.user_data["waiting_for_answer"] = True
@@ -156,17 +148,23 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         number = query.data.split("_")[1]
         await query.message.reply_text(f"💡 Hint {number}: This is hint {number}.")
 
-    elif query.data == "answer":
-        context.user_data["waiting_for_answer"] = True
-        await query.message.reply_text("✍️ Write your answer:")
-
 async def check_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if context.user_data.get("waiting_for_answer"):
-        context.user_data["waiting_for_answer"] = False
-        if update.message.text.lower().strip() == CORRECT_ANSWER:
-            await update.message.reply_text("✅ Correct!")
-        else:
-            await update.message.reply_text("❌ Wrong answer.")
+    if not context.user_data.get("waiting_for_answer"):
+        return
+
+    context.user_data["waiting_for_answer"] = False
+
+    user_answer = update.message.text.strip()
+
+    if user_answer in CORRECT_ANSWERS:
+        await update.message.reply_text(
+            "✅ Ճիշտ է։ Դուք բացահայտեցիք գործը 🎉"
+        )
+    else:
+        await update.message.reply_text(
+            "❌ Սխալ պատասխան։ Փորձեք կրկին։"
+        )
+
 
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
