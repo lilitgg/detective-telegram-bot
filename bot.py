@@ -42,7 +42,8 @@ def run_web():
         return "Bot is running"
 
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
+
 
 def main_menu():
     keyboard = [
@@ -177,7 +178,8 @@ async def check_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def main():
-    threading.Thread(target=run_web).start()
+    threading.Thread(target=run_web, daemon=True).start()
+
 
     app = ApplicationBuilder().token(TOKEN).build()
 
