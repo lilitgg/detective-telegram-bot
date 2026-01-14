@@ -11,8 +11,9 @@ from telegram.ext import (
 )
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
+import os
 
-TOKEN = "YOUR_TOKEN"
+TOKEN = os.getenv("BOT_TOKEN") 
 CORRECT_ANSWER = "Վազգեն"
 
 def main_menu():
