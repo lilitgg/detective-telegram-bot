@@ -1,4 +1,8 @@
+import threading
+from flask import Flask
+import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -7,9 +11,6 @@ from telegram.ext import (
     ContextTypes,
     filters
 )
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
-
-import os
 
 TOKEN = os.getenv("BOT_TOKEN") 
 CORRECT_ANSWERS = {"Davit Samvelyan", 
@@ -33,6 +34,15 @@ HINTS = {
     "hint_11": "🧩 Հուշում 11\nԱլիբին հակասում է վկաների ցուցմունքներին։",
 }
 
+def run_web():
+    app = Flask(__name__)
+
+    @app.route("/")
+    def home():
+        return "Bot is running"
+
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
 
 def main_menu():
     keyboard = [
@@ -167,6 +177,8 @@ async def check_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def main():
+    threading.Thread(target=run_web).start()
+
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
