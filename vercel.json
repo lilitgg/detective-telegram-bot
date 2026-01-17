@@ -2,7 +2,7 @@
   "version": 2,
   "functions": {
     "api/webhook.py": {
-      "runtime": "python@3.11"
+      "runtime": "now-python@3.11"
     }
   }
 }
