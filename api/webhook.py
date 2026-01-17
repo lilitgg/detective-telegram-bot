@@ -1,8 +1,25 @@
 import os
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, ContextTypes, filters
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    ReplyKeyboardMarkup
+)
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    CallbackQueryHandler,
+    MessageHandler,
+    ContextTypes,
+    filters
+)
+from telegram.request import HTTPXRequest
+from telegram.constants import ParseMode
+from telegram import Bot
+from telegram.ext.webhookhandler import WebhookHandler
+from telegram.ext.webhookhandler import WebhookResponse
 
-TOKEN = os.getenv("BOT_TOKEN")
+TOKEN = os.environ["BOT_TOKEN"]
 
 CORRECT_ANSWERS = {
     "Davit Samvelyan",
@@ -11,10 +28,17 @@ CORRECT_ANSWERS = {
     "davit samvelyan"
 }
 
+application = Application.builder().token(TOKEN).build()
+
+# ---------------- HANDLERS ----------------
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "👋 Բարի գալուստ\n\nՍեղմեք կոճակը՝ սկսելու համար",
-        reply_markup=ReplyKeyboardMarkup([["Start", "Stop"]], resize_keyboard=True)
+        reply_markup=ReplyKeyboardMarkup(
+            [["Start", "Stop"]],
+            resize_keyboard=True
+        )
     )
 
     await update.message.reply_text(
@@ -59,15 +83,21 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("❌ Սխալ պատասխան")
 
-app = Application.builder().token(TOKEN).build()
+# Register handlers
+application.add_handler(CommandHandler("start", start))
+application.add_handler(CallbackQueryHandler(button_handler))
+application.add_handler(MessageHandler(filters.Regex("^(Start|Stop)$"), menu_handler))
+application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
 
-app.add_handler(CommandHandler("start", start))
-app.add_handler(CallbackQueryHandler(button_handler))
-app.add_handler(MessageHandler(filters.Regex("^(Start|Stop)$"), menu_handler))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
+# ---------------- WEBHOOK ENTRY ----------------
 
 async def handler(request):
+    if not application.running:
+        await application.initialize()
+        await application.start()
+
     data = await request.json()
-    update = Update.de_json(data, app.bot)
-    await app.process_update(update)
-    return {"ok": True}
+    update = Update.de_json(data, application.bot)
+    await application.process_update(update)
+
+    return WebhookResponse()

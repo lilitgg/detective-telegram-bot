@@ -1,5 +1,0 @@
-services:
-  - type: worker
-    name: detective-telegram-bot
-    env: python
-    startCommand: python bot.py
